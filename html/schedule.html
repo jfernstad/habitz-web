@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Update Habit Schedule</title>
+    <meta name="description" content="Update Habit Schedule">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="habitz.css">
+
+</head>
+
+<body>
+    <div class="headline"><a href="/today">Schedule</a></div>
+    <form>
+        <div class="calendar">
+            <ul class="weekdays">
+                <li class="task">Task</li>
+                <li>Mon</li>
+                <li>Tue</li>
+                <li>Wed</li>
+                <li>Thu</li>
+                <li>Fri</li>
+                <li>Sat</li>
+                <li>Sun</li>
+            </ul>
+
+            <ol class="day-grid">
+                {{ range $idx, $tmpl := . }}
+                <li class="task task-text">{{ $tmpl.Habit }}</li>
+                {{ range $hIdx, $day := $tmpl.Weekdays }}
+                <li>
+                    <label class="container">
+                        {{ if $day.Enabled }}
+                        <input type="checkbox" checked
+                            onchange="updateSchedule(this, '{{$tmpl.Name}}','{{ $day.Name }}','{{ $tmpl.Habit }}');">
+                        {{ else }}
+                        <input type="checkbox"
+                            onchange="updateSchedule(this, '{{$tmpl.Name}}','{{ $day.Name }}','{{ $tmpl.Habit }}');">
+                        {{ end }}
+                        <span class="checkmark"></span>
+                    </label>
+                </li>
+                {{ end }}
+                {{ end }}
+            </ol>
+
+        </div>
+        <div class="row">
+            <button type="button" onclick="window.location.href='/today'">Back</button>
+        </div>
+    </form>
+    <script async defer>
+        function updateSchedule(el, user, weekday, habit) {
+            console.log("updated habit: ", habit, el.checked ? "add" : "remove")
+
+            // Prepare request
+            var request = new XMLHttpRequest();
+            var url = "/v1/";
+            action = "POST"
+
+            // We want to enable this habit
+            if (el.checked) {
+                body = {
+                    "name": user,
+                    "habit": habit,
+                    "weekdays": [weekday],
+                }
+
+            } else { // We want to delete this habit
+                action = "DELETE"
+                body = {
+                    "name": user,
+                    "habit": habit,
+                    "weekday": weekday,
+                }
+            }
+
+            request.open(action, url);
+            request.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    console.log(this.responseText);
+                }
+            };
+            request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            request.send(JSON.stringify(body));
+        }
+    </script>
+</body>
+
+</html>
