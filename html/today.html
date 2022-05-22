@@ -24,41 +24,18 @@
         
     </header>
     <div id="allHabitTypes" class="row">
-        <!-- {{ range $idx, $user := .States }} -->
-        <!-- <div class="column"> -->
-            <!-- <div class="user underline"> <a href="/update/{{ $user.TypeName }}">{{ $user.TypeName }}</a> </div> -->
-            <!-- <table id="habitz-list"> -->
-                <!-- {{ range $hIdx, $habit := $user.Habitz }}
-                <tr>
-                    <label class="container habit">{{ $habit.Habit }}
-                    {{if $habit.Complete}}
-                        <input type="checkbox" id="{{ $habit.ID }}" checked
-                            onchange="updateHabit('{{$user.UserID}}',{{ $habit.ID }});">
-                    {{else}}
-                        <input type="checkbox" id="{{ $habit.ID }}"
-                            onchange="updateHabit('{{$user.UserID}}',{{ $habit.ID }});">
-                    {{end}}
-                        <span class="checkmark"></span>
-                    </label>
-                </tr>
-                {{else}}
-                <tr> <div class="habit nohabit">Day off today 🎉</div></tr>
-                {{ end }} -->
-            <!-- </table> -->
-        <!-- </div> -->
-        <!-- {{ end }} -->
     </div>
-    <button class="buttonBottom" onclick="location.href='/new';">Add a new Habit!</button>
+    <button class="buttonBottom" onclick="location.href='/new.html';">Add a new Habit!</button>
 
     <script>
-        function updateHabit(user, habit_id) {
+        function updateHabit(user_id, habit_id) {
             var el = document.getElementById(habit_id);
             console.log("tapped update status: ", habit_id, el.checked)
 
             // Prepare body
             body = [
                 {
-                    "user": user,
+                    "user_id": user_id,
                     "habitz": [
                         {
                             "id": habit_id,
@@ -70,19 +47,13 @@
 
             POST("/v1/today", body, function (status, payload) {
                 console.log("Habit Update ["+status+"]" +payload);
+            },
+            function(status, payload){
+                // Error callback, revert change
+                // TODO: Peobably let the user know something happened
+                console.log("ERROR["+status+"]: " + payload)
+                el.checked = !el.checked
             })
-            // Prepare request
-            // var request = new XMLHttpRequest();
-            // var url = "/v1/today";
-
-            // request.onreadystatechange = function () {
-            //     if (this.readyState == 4 && this.status == 200) {
-            //         console.log(this.responseText);
-            //     }
-            // };
-            // request.open("POST", url);
-            // request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-            // request.send(JSON.stringify(body));
         }
 
 /// BASE FUNCTIONS
@@ -107,60 +78,60 @@
             document.getElementById("updated-timestamp").innerHTML = updatedAt;
             document.getElementById("date-header").innerText = weekday + " " + todaysDate;
 
-                dailyHabitz.forEach(habitType => {
-                    var column = document.createElement("div");
-                    column.className = "column";
+            var column = document.createElement("div");
+            column.className = "column";
 
-                    var header = document.createElement("div")
-                    header.className = "user underline";
-                    header.innerHTML = userFirstname();
+            var header = document.createElement("div")
+            header.className = "user underline";
+            header.innerHTML = userFirstname();
 
-                    column.appendChild(header)
+            column.appendChild(header)
 
-                    var table = document.createElement("table");
 
-                    if (dailyHabitz.length == 0) {
-                        var row = table.insertRow(table.rows.length - 1);
-                        var empty = document.createElement("div")
-                        empty.className = "habit nohabit";
-                        empty.innerHTML = "Day off today 🎉";
-                        row.appendChild(empty)
-                        
-                    } else {
-                        habitType.habitz.forEach(habit => {
+            console.log("Daily len:" + dailyHabitz.length)
+            if (dailyHabitz.length == 0) {
+                var empty = document.createElement("div")
+                empty.className = "habit nohabit";
+                empty.innerHTML = "Day off today 🎉";
+                column.appendChild(empty)
+            }
 
-                            var row = table.insertRow(table.rows.length - 1);
-                            console.log("Iterating: " + userFirstname())
+            var table = document.createElement("table");
+            dailyHabitz.forEach(daily => { // Only a single one for now
 
-                            var lbl = document.createElement("label");
-                            lbl.innerHTML = habit.habit;
-                            lbl.className = "container habit";
+                daily.habitz.forEach(habit =>{
 
-                            var input = document.createElement("input");
-                            input.type = "checkbox";
-                            input.id = habit.id;
-                            input.checked = habit.complete;
-                            input.onchange = function(){
-                                // updateHabit(habitType.user_id, habit.id);
-                                console.log("Tapped: " + habitType.user_id + " - " + habit.id)
-                            };
+                    var row = table.insertRow(table.rows.length - 1);
+                    console.log("Iterating: " + userFirstname())
+                    console.log("Habit: " + habit)
 
-                            var span = document.createElement("span")
-                            span.className = "checkmark";
+                    var lbl = document.createElement("label");
+                    lbl.innerHTML = habit.habit;
+                    lbl.className = "container habit";
 
-                            lbl.appendChild(input)
-                            lbl.appendChild(span)
-                            row.appendChild(lbl)
+                    var input = document.createElement("input");
+                    input.type = "checkbox";
+                    input.id = habit.id;
+                    input.checked = habit.complete;
+                    input.onchange = function(){
+                        updateHabit(habitObject.user_id, habit.id);
+                    };
 
-                            console.log("Habit [" + habit.weekday + "]: " + habit.habit)
-                        });
-                    }
-                    column.appendChild(table)
-                    parent.appendChild(column)
-                });
+                    var span = document.createElement("span")
+                    span.className = "checkmark";
 
+                    lbl.appendChild(input)
+                    lbl.appendChild(span)
+                    row.appendChild(lbl)
+
+                    console.log("Habit [" + habit.weekday + "]: " + habit.habit)
+                })
+            });
+            column.appendChild(table)
+            parent.appendChild(column)
         }
 
+        // Retrive the Habitz I should reinforce today
         GET("/v1/today", callback)
     }
 
