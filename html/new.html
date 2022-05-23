@@ -95,7 +95,7 @@
 
             console.log("Body:", body)
 
-            POST("/v1", body, function(status, payload){
+            POST("/v1/schedule", body, function(status, payload){
                 document.location.href = "/today.html";
             })
         }

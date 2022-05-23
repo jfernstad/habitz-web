@@ -13,15 +13,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link rel="stylesheet" href="habitz.css">
-
+    <script type="text/javascript" src="./habitz.js"></script>
 </head>
 
-<body>
-    <div class="headline"><a href="/today">Schedule</a></div>
+<body onload="retrieveSchedule()">
+    <div class="headline"><a href="/today.html">Schedule</a></div>
     <form>
         <div class="calendar">
             <ul class="weekdays">
-                <li class="task">Task</li>
+                <li class="task">Habit</li>
                 <li>Mon</li>
                 <li>Tue</li>
                 <li>Wed</li>
@@ -31,67 +31,103 @@
                 <li>Sun</li>
             </ul>
 
-            <ol class="day-grid">
-                {{ range $idx, $tmpl := . }}
-                <li class="task task-text">{{ $tmpl.Habit }}</li>
-                {{ range $hIdx, $day := $tmpl.Weekdays }}
-                <li>
-                    <label class="container">
-                        {{ if $day.Enabled }}
-                        <input type="checkbox" checked
-                            onchange="updateSchedule(this, '{{$tmpl.Name}}','{{ $day.Name }}','{{ $tmpl.Habit }}');">
-                        {{ else }}
-                        <input type="checkbox"
-                            onchange="updateSchedule(this, '{{$tmpl.Name}}','{{ $day.Name }}','{{ $tmpl.Habit }}');">
-                        {{ end }}
-                        <span class="checkmark"></span>
-                    </label>
-                </li>
-                {{ end }}
-                {{ end }}
+            <ol id="day-grid" class="day-grid">
+                <!-- {{ range $idx, $tmpl := . }} -->
+                <!-- <li class="task task-text">{{ $tmpl.Habit }}</li> -->
+                <!-- {{ range $hIdx, $day := $tmpl.Weekdays }} -->
+                <!-- <li> -->
+                    <!-- <label class="container"> -->
+                        <!-- {{ if $day.Enabled }} -->
+                        <!-- <input type="checkbox" checked -->
+                            <!-- onchange="updateSchedule(this, '{{$tmpl.Name}}','{{ $day.Name }}','{{ $tmpl.Habit }}');"> -->
+                        <!-- {{ else }} -->
+                        <!-- <input type="checkbox" -->
+                            <!-- onchange="updateSchedule(this, '{{$tmpl.Name}}','{{ $day.Name }}','{{ $tmpl.Habit }}');"> -->
+                        <!-- {{ end }} -->
+                        <!-- <span class="checkmark"></span> -->
+                    <!-- </label> -->
+                <!-- </li> -->
+                <!-- {{ end }} -->
+                <!-- {{ end }} -->
             </ol>
 
         </div>
         <div class="row">
-            <button type="button" onclick="window.location.href='/today'">Back</button>
+            <button type="button" onclick="window.location.href='/today.html';">Back</button>
         </div>
     </form>
     <script async defer>
-        function updateSchedule(el, user, weekday, habit) {
+        function updateSchedule(el, user_id, weekday, habit) {
             console.log("updated habit: ", habit, el.checked ? "add" : "remove")
-
-            // Prepare request
-            var request = new XMLHttpRequest();
-            var url = "/v1/";
-            action = "POST"
 
             // We want to enable this habit
             if (el.checked) {
                 body = {
-                    "name": user,
+                    "user_id": user_id,
                     "habit": habit,
                     "weekdays": [weekday],
                 }
-
+                POST("/v1/schedule", body, function (status, payload) {
+                    console.log(this.responseText);
+                })
             } else { // We want to delete this habit
                 action = "DELETE"
                 body = {
-                    "name": user,
+                    "user_id": user_id,
                     "habit": habit,
                     "weekday": weekday,
                 }
+                DELETE("/v1/schedule", body, function (status, payload) {
+                    console.log(this.responseText);
+                })
             }
 
-            request.open(action, url);
-            request.onreadystatechange = function () {
-                if (this.readyState == 4 && this.status == 200) {
-                    console.log(this.responseText);
-                }
-            };
-            request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-            request.send(JSON.stringify(body));
+        }
+
+        // Build the DOM
+        function retrieveSchedule(){
+            callback = function(status, payload){
+                console.log("RESPONSE [" + status + "]: " + payload);
+
+                habitzSchedule = JSON.parse(payload);
+                allHabitz = habitzSchedule.habitz;
+
+                var grid = document.getElementById("day-grid");
+
+                allHabitz.forEach(single => {
+                    var heading = document.createElement("li");
+                    heading.className = "task task-text";
+                    heading.innerHTML = single.habit
+
+                    grid.appendChild(heading)
+
+                    single.weekdays.forEach(weekday => {
+                        var day = document.createElement("li")
+                        var lbl = document.createElement("label");
+                        var inp = document.createElement("input")
+                        var spn = document.createElement("span")
+
+                        lbl.className = "container"
+                        spn.className = "checkmark"
+
+                        inp.type = "checkbox"
+                        inp.checked = weekday.enabled
+                        inp.onchange = function(){
+                            console.log("TAP: " + single.habit + " - " + weekday.day)
+                            updateSchedule(this, habitzSchedule.user_id, weekday.day, single.habit);   
+                        }
+
+                        lbl.appendChild(inp)
+                        lbl.appendChild(spn)
+                        day.appendChild(lbl)
+                        grid.appendChild(day)
+                    });
+                });
+            }
+
+            // Retrive all Habitz
+            GET("/v1/schedule", callback)
         }
     </script>
 </body>
-
 </html>
