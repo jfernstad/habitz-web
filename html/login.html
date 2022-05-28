@@ -54,7 +54,7 @@
                 localStorage.removeItem("habitz-token")
             }else{
                 console.log("Token is valid, moving on")
-                document.location.href = '/today.html'
+                document.location.href = '/today'
             }
         }
     };
@@ -77,7 +77,7 @@
                 // Backend returned a token, store it
                 rsp = JSON.parse(payload)
                 localStorage.setItem("habitz-token", rsp.token)
-                document.location.href = "/today.html";
+                document.location.href = "/today";
             });
         }
 </script>

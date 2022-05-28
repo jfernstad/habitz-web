@@ -25,7 +25,7 @@
     </header>
     <div id="allHabitTypes" class="row">
     </div>
-    <button class="buttonBottom" onclick="location.href='/schedule.html';">Add a Habit!</button>
+    <button class="buttonBottom" onclick="location.href='/schedule';">Add a Habit!</button>
 
     <script>
         function updateHabit(user_id, habit_id) {
@@ -84,7 +84,7 @@
             column.className = "column";
             header.className = "user underline";
 
-            editSchedule.href = "/schedule.html"
+            editSchedule.href = "/schedule"
             editSchedule.innerHTML = userFirstname();
 
             header.appendChild(editSchedule)
