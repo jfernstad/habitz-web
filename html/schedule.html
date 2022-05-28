@@ -8,7 +8,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Update Habit Schedule</title>
+    <title>Habitz Schedule</title>
     <meta name="description" content="Update Habit Schedule">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -19,38 +19,17 @@
 <body onload="retrieveSchedule()">
     <div class="headline"><a href="/today.html">Schedule</a></div>
     <form>
+        <div class="row"><input type="text" name="habit" id="habit" placeholder="e.g Do 100 pushups"></div>
+        <div class="row">
+            <button type="button" onclick="createHabit();return false;">Add</button>
+        </div>
         <div class="calendar">
             <ul class="weekdays">
                 <li class="task">Habit</li>
-                <li>Mon</li>
-                <li>Tue</li>
-                <li>Wed</li>
-                <li>Thu</li>
-                <li>Fri</li>
-                <li>Sat</li>
-                <li>Sun</li>
+                <li>Mon</li><li>Tue</li><li>Wed</li><li>Thu</li><li>Fri</li><li>Sat</li><li>Sun</li>
             </ul>
 
-            <ol id="day-grid" class="day-grid">
-                <!-- {{ range $idx, $tmpl := . }} -->
-                <!-- <li class="task task-text">{{ $tmpl.Habit }}</li> -->
-                <!-- {{ range $hIdx, $day := $tmpl.Weekdays }} -->
-                <!-- <li> -->
-                    <!-- <label class="container"> -->
-                        <!-- {{ if $day.Enabled }} -->
-                        <!-- <input type="checkbox" checked -->
-                            <!-- onchange="updateSchedule(this, '{{$tmpl.Name}}','{{ $day.Name }}','{{ $tmpl.Habit }}');"> -->
-                        <!-- {{ else }} -->
-                        <!-- <input type="checkbox" -->
-                            <!-- onchange="updateSchedule(this, '{{$tmpl.Name}}','{{ $day.Name }}','{{ $tmpl.Habit }}');"> -->
-                        <!-- {{ end }} -->
-                        <!-- <span class="checkmark"></span> -->
-                    <!-- </label> -->
-                <!-- </li> -->
-                <!-- {{ end }} -->
-                <!-- {{ end }} -->
-            </ol>
-
+            <ol id="day-grid" class="day-grid"></ol>
         </div>
         <div class="row">
             <button type="button" onclick="window.location.href='/today.html';">Back</button>
@@ -84,6 +63,26 @@
 
         }
 
+        function createHabit() {
+            // Validate form
+            habit = document.getElementById('habit').value;
+
+            if (habit.length < 1){
+                return
+            }
+
+            // Prepare body
+            body = {
+                "habit": habit,
+                "weekdays": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+            }
+
+            console.log("Body:", body)
+
+            POST("/v1/schedule", body, function (status, payload) {
+                document.location.href = "/schedule.html";
+            })
+        }
         // Build the DOM
         function retrieveSchedule(){
             callback = function(status, payload){
